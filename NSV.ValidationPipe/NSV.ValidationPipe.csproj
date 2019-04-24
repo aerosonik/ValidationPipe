@@ -5,6 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NSV.ExecutionPipe" Version="1.0.30" />
+    <PackageReference Include="NSV.ExecutionPipe" Version="1.0.31" />
   </ItemGroup>
 </Project>

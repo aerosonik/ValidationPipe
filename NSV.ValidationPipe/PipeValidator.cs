@@ -1,4 +1,5 @@
 ﻿using NSV.ExecutionPipe;
+using NSV.ExecutionPipe.Models;
 using NSV.ExecutionPipe.Pipes;
 using System;
 using System.Collections.Concurrent;
@@ -126,8 +127,8 @@ namespace NSV.ValidationPipe
             }
             var result = ValidateResult.DefaultValid;
             result.SubResults = results.SelectMany(x => x.SubResults.Value).ToArray();
-            if (result.SubResults.Value.Any(x => !x.IsValid))
-                result.IsValid = false;
+            if (result.SubResults.Value.Any(x => x.IsFailed))
+                result.Success = ExecutionResult.Failed;
             return result;
         }
         #endregion
