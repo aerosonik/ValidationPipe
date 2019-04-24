@@ -2,7 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="nuget.exe" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="NSV.ExecutionPipe" Version="1.0.31" />
