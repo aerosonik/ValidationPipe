@@ -121,7 +121,7 @@ namespace NSV.ValidationPipe
         async Task<ValidateResult> IFieldValidatorExecutor<TModel>.ExecuteValidationAsync(TModel model)
         {
             if (!CheckIfConditions(model))
-                return ValidateResult.DefaultValid;
+                return ValidateResult.Default;
 
             if (_isCollectionField)
             {
