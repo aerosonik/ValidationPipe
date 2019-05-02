@@ -14,7 +14,7 @@
     <PackageProjectUrl>https://github.com/aerosonik/ValidationPipe</PackageProjectUrl>
     <RepositoryUrl>https://github.com/aerosonik/ValidationPipe</RepositoryUrl>
     <Win32Resource></Win32Resource>
-    <PackageIconUrl>https://github.com/aerosonik/ValidationPipe/blob/master/NSV.ValidationPipe/icon.png</PackageIconUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/aerosonik/ValidationPipe/f5997cdfaff661d36939c45823e93bb613a3767d/icon.png</PackageIconUrl>
     <RepositoryType></RepositoryType>
     <Description>Lightweight framework for fluent validation</Description>
     <Copyright>aerosonik@nsv 2019</Copyright>
