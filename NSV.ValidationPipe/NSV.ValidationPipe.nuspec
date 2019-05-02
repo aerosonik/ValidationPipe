@@ -6,6 +6,7 @@
     <title>$title$</title>
     <authors>$author$</authors>
     <owners>$author$</owners>
+    <icon>icon.png</icon>
     <projectUrl>https://github.com/aerosonik/ValidationPipe</projectUrl>
     <iconUrl>https://github.com/aerosonik/ValidationPipe/blob/master/NSV.ValidationPipe/icon.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
