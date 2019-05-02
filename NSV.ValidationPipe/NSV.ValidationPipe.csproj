@@ -29,4 +29,10 @@
   <ItemGroup>
     <PackageReference Include="NSV.ExecutionPipe" Version="1.0.31" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="NSV.ValidationPipe.nuspec">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

@@ -6,9 +6,8 @@
     <title>$title$</title>
     <authors>$author$</authors>
     <owners>$author$</owners>
-    <icon>icon.png</icon>
     <projectUrl>https://github.com/aerosonik/ValidationPipe</projectUrl>
-    <iconUrl>https://github.com/aerosonik/ValidationPipe/blob/master/NSV.ValidationPipe/icon.png</iconUrl>
+    <iconUrl>file:///icon.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Lightweight framework for fluent validation</description>
     <releaseNotes>Summary of changes made in this release of the package.</releaseNotes>
