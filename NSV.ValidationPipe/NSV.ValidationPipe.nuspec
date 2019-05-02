@@ -7,7 +7,7 @@
     <authors>$author$</authors>
     <owners>$author$</owners>
     <projectUrl>https://github.com/aerosonik/ValidationPipe</projectUrl>
-    <iconUrl>https://github.com/aerosonik/ExecutionPipe/blob/master/NSV.ExecutionPipe/Resources/nsv_96.png</iconUrl>
+    <iconUrl>https://github.com/aerosonik/ValidationPipe/blob/master/NSV.ValidationPipe/icon.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Lightweight framework for fluent validation</description>
     <releaseNotes>Summary of changes made in this release of the package.</releaseNotes>
