@@ -34,11 +34,36 @@ namespace NSV.ValidationPipe.xTests
         public TestSubValidationPipe()
         {
             For(x => x.ModelType)
+                .Path($"{nameof(SimpleTestModel)}.{nameof(SimpleTestModel.ModelType)}")
                 .Must(x => x != TestModelType.Unknown)
                 .WithMessage("ModelType is Unknown")
                 .Add()
             .If(x => x.TestValue is QuantityTestField)
-                .For(x => x.TestValue as QuantityTestField).Must(x => x.Count > 1).WithMessage("");
+                .For(x => x.TestValue as QuantityTestField)
+                    .Path($"{nameof(SimpleTestModel)}.{nameof(SimpleTestModel.TestValue)}")
+                    .Must(x => x.Count > 1).WithMessage("Value is Quantity and must Count > 1")
+                    .Add()
+            .EndIf()
+            .If(x => x.TestValue is PeriodTestField)
+                .For(x => x.TestValue as PeriodTestField)
+                    .Path($"{nameof(SimpleTestModel)}.{nameof(SimpleTestModel.TestValue)}")
+                    .Must(x => x.From < DateTime.Now).WithMessage("Value is Period and must From < Now")
+                    .Must(x => x.To > DateTime.Now).WithMessage("Value is Period and must To > Now")
+                    .Add()
+            .EndIf()
+            .If(x => x.TestValue is DateTestField)
+                .For(x => x.TestValue as DateTestField)
+                    .Path($"{nameof(SimpleTestModel)}.{nameof(SimpleTestModel.TestValue)}")
+                    .Must(x => x.Date.Day == DateTime.Now.Day).WithMessage("Value is Date and must Date.Day == Now.Day")
+                    .Add()
+            .EndIf()
+            .If(x => x.TestValue is MoneyTestField)
+                .For(x => x.TestValue as MoneyTestField)
+                    .Path($"{nameof(SimpleTestModel)}.{nameof(SimpleTestModel.TestValue)}")
+                    .Must(x => x.Amount > 0).WithMessage("Value is Money and must Amount > 0")
+                    .Must(x => x.Currency == Currency.RUB).WithMessage("Value is Money and must Currency == RUB")
+                    .Add()
+            .EndIf();
 
 
         }
