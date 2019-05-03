@@ -66,6 +66,12 @@ namespace NSV.ValidationPipe
         }
 
         //take effect only if collection
+        /// <summary>
+        /// If Field is collection, call AsParallel() will 
+        /// execute validation for each element ofcollection as parallel.
+        /// If Field is NOT collection, call of this method will ignored
+        /// </summary>
+        /// <returns></returns>
         public IFieldValidatorCreator<TModel, TField> AsParallel()
         {
             _asParallel = true;

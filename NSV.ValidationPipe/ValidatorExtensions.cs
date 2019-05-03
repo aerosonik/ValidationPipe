@@ -7,6 +7,7 @@ namespace NSV.ValidationPipe
 {
     public static class ValidatorExtensions
     {
+        private static string GuidPattern = @"^([0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{12})$";
         //NotNull
         public static IFieldValidatorCreator<TModel, TField> NotNull<TModel, TField>(
             this IFieldValidatorCreator<TModel, TField> creator, 
@@ -100,6 +101,17 @@ namespace NSV.ValidationPipe
         {
             return creator.Must(x => Regex.IsMatch(x, pattern, RegexOptions.CultureInvariant));
         }
+        public static IValidatorCreator<TModel, string> IsGuid<TModel>(
+           this IFieldValidatorCreator<TModel, string> creator)
+        {
+            return creator.IsMatch(GuidPattern);
+        }
+        public static IFieldValidatorCreator<TModel, string> IsGuid<TModel>(
+           this IFieldValidatorCreator<TModel, string> creator,
+           string message = null)
+        {
+            return creator.IsMatch(GuidPattern).WithMessage(message);
+        }
         //IsEmpty
         public static IFieldValidatorCreator<TModel, string> IsEmpty<TModel>(
             this IFieldValidatorCreator<TModel, string> creator, string message = null)
@@ -113,12 +125,25 @@ namespace NSV.ValidationPipe
             return creator.Must(x => string.IsNullOrWhiteSpace(x));
         }
         //NotEmpty
+        /// <summary>
+        /// Not null, not empty, not white space
+        /// </summary>
+        /// <typeparam name="TModel"></typeparam>
+        /// <param name="creator"></param>
+        /// <param name="message"></param>
+        /// <returns></returns>
         public static IFieldValidatorCreator<TModel, string> NotEmpty<TModel>(
             this IFieldValidatorCreator<TModel, string> creator, string message = null)
         {
             return creator.Must(x => !string.IsNullOrWhiteSpace(x))
                           .WithMessage(message);
         }
+        /// <summary>
+        /// Not null, not empty, not white space
+        /// </summary>
+        /// <typeparam name="TModel"></typeparam>
+        /// <param name="creator"></param>
+        /// <returns></returns>
         public static IValidatorCreator<TModel, string> NotEmpty<TModel>(
            this IFieldValidatorCreator<TModel, string> creator)
         {

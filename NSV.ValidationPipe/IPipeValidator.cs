@@ -7,8 +7,7 @@ using System.Threading.Tasks;
 
 namespace NSV.ValidationPipe
 {
-    public interface IPipeValidator<TModel>: 
-        IValidator<TModel>, 
+    public interface IPipeValidator<TModel>:
         IValidatorAsync<TModel>,
         ILocalCache
     {
@@ -28,7 +27,6 @@ namespace NSV.ValidationPipe
         IPipeValidator<TModel> UseLocalCache();
 
         Task<ValidateResult> ExecuteAsync(TModel model);
-
     }
 
 

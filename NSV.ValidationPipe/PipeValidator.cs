@@ -133,9 +133,11 @@ namespace NSV.ValidationPipe
         }
         #endregion
 
-        #region IValidator<TField>, IValidatorAsync<TField>
-        public abstract ValidateResult Validate(TModel model);
-        public abstract Task<ValidateResult> ValidateAsync(TModel model);
+        #region IValidatorAsync<TField>
+        public async Task<ValidateResult> ValidateAsync(TModel model)
+        {
+            return await ExecuteAsync(model);
+        }
         #endregion
 
         #region ILocalCache
