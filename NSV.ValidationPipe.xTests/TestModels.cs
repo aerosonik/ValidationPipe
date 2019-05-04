@@ -14,12 +14,10 @@ namespace NSV.ValidationPipe.xTests
         public TestModelType ModelType { get; set; }
         public BaseTestField TestValue { get; set; }
         public List<ComplexTestField> ComplexFields { get; set; }
-
         public DateTime Created { get; set; }
         public TimeSpan Duration { get; set; }
         public string Text { get; set; }
         public byte[] Binary { get; set; }
-
     }
 
     public enum TestModelType

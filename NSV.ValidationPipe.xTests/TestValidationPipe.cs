@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NSV.ValidationPipe;
+using NSV.ValidationPipe.Extensions;
 
 namespace NSV.ValidationPipe.xTests
 {
@@ -16,7 +17,8 @@ namespace NSV.ValidationPipe.xTests
                 .IsGuid().WithMessage("Should be Guid")
                 .Equal(TestConst.Guid_1)
                     .WithMessage($"Should be equal to [{TestConst.Guid_1}]")
-                .StartWith("f27a5b7f").WithMessage("Should start with [f27a5b7f-0b7c]")
+                .StartWith("f27a5b7f")
+                    .WithMessage("Should start with [f27a5b7f-0b7c]")
                 .Add()
             .ForCollection(x => x.Models)
                 .AsParallel()
@@ -25,7 +27,8 @@ namespace NSV.ValidationPipe.xTests
                 .Add()
             .For(x => x.Models)
                 .Path($"{nameof(ComplexTestModel)}.{nameof(ComplexTestModel.Models)}")
-                .Must(x => x.Count > 1).WithMessage("Count less then 1")
+                .Must(x => x.Count > 1)
+                    .WithMessage("Count less then 1")
                 .Add();
         }
     }
@@ -42,35 +45,64 @@ namespace NSV.ValidationPipe.xTests
             .If(x => x.TestValue is QuantityTestField)
                 .For(x => x.TestValue as QuantityTestField)
                     .Path($"{nameof(SimpleTestModel)}.{nameof(SimpleTestModel.TestValue)}")
-                    .Must(x => x.Count > 1).WithMessage("Value is Quantity and must Count > 1")
+                    .Must(x => x.Count > 1)
+                        .WithMessage("Value is Quantity and must Count > 1")
                     .Add()
             .EndIf()
             .If(x => x.TestValue is PeriodTestField)
                 .For(x => x.TestValue as PeriodTestField)
                     .Path($"{nameof(SimpleTestModel)}.{nameof(SimpleTestModel.TestValue)}")
-                    .Must(x => x.From < DateTime.Now).WithMessage("Value is Period and must From < Now")
-                    .Must(x => x.To > DateTime.Now).WithMessage("Value is Period and must To > Now")
+                    .Must(x => x.From < DateTime.Now)
+                        .WithMessage("Value is Period and must From < Now")
+                    .Must(x => x.To > DateTime.Now)
+                        .WithMessage("Value is Period and must To > Now")
                     .Add()
             .EndIf()
             .If(x => x.TestValue is DateTestField)
                 .For(x => x.TestValue as DateTestField)
                     .Path($"{nameof(SimpleTestModel)}.{nameof(SimpleTestModel.TestValue)}")
-                    .Must(x => x.Date.Day == DateTime.Now.Day).WithMessage("Value is Date and must Date.Day == Now.Day")
+                    .Must(x => x.Date.Day == DateTime.Now.Day)
+                        .WithMessage("Value is Date and must Date.Day == Now.Day")
                     .Add()
             .EndIf()
             .If(x => x.TestValue is MoneyTestField)
                 .For(x => x.TestValue as MoneyTestField)
                     .Path($"{nameof(SimpleTestModel)}.{nameof(SimpleTestModel.TestValue)}")
-                    .Must(x => x.Amount > 0).WithMessage("Value is Money and must Amount > 0")
-                    .Must(x => x.Currency == Currency.RUB).WithMessage("Value is Money and must Currency == RUB")
+                    .Must(x => x.Amount > 0)
+                        .WithMessage("Value is Money and must Amount > 0")
+                    .Must(x => x.Currency == Currency.RUB)
+                        .WithMessage("Value is Money and must Currency == RUB")
                     .Add()
             .EndIf()
+            .For(x => x.ComplexFields)
+                .Path($"{nameof(SimpleTestModel)}.{nameof(SimpleTestModel.ComplexFields)}")
+                .NotEmpty("ComplexFields is Empty")
+                .Add()
             .ForCollection(x => x.ComplexFields)
                 .Path($"{nameof(SimpleTestModel)}.{nameof(SimpleTestModel.ComplexFields)}")
-                .Must(x => x.System == TestConst.Guid_2).WithMessage($"Not All systems equal [{TestConst.Guid_2}]")
+                .Must(x => x.System == TestConst.Guid_2)
+                    .WithMessage($"Not All systems equal [{TestConst.Guid_2}]")
                 .Set(new TestComplexFieldValidationPipe())
+                .Add()
+            .For(x => x.Created)
+                .Path($"{nameof(SimpleTestModel)}.{nameof(SimpleTestModel.Created)}")
+                .Less(DateTime.Now)
+                    .WithMessage("Invalid Created DateTime")
+                .Between(DateTime.Now.AddDays(-5), DateTime.Now)
+                    .WithMessage("Invalid period of Created DateTime")
+                .Add()
+            .For(x => x.Duration)
+                .Path($"{nameof(SimpleTestModel)}.{nameof(SimpleTestModel.Duration)}")
+                .Must(x => x > TimeSpan.MinValue)
+                    .WithMessage("Duration is too short")
+                .Add()
+            .For(x => x.Binary)
+                .Path($"{nameof(SimpleTestModel)}.{nameof(SimpleTestModel.Binary)}")
+                .NotEmpty("Binary Array should'n be Empty")
+                .Any(x => x > 1, "At least one item should be greater than 1")
+                .Contains((byte)100, "At least one item should be 100")
+                .When(x=> x.Binary != null && x.Binary.Any())
                 .Add();
-
         }
     }
 
@@ -79,10 +111,10 @@ namespace NSV.ValidationPipe.xTests
         public TestComplexFieldValidationPipe()
         {
             For(x => x.Subfields)
-                .Must(x => x.Any(y => y.Version != null && y.Version > 5))
-                    .WithMessage("Any subfield with Version greater then 5 Not found")
-                .Must(x => x.Any())
+                .NotEmpty()
                     .WithMessage("Subfield list is empty")
+                .Any(y => y.Version != null && y.Version > 5)
+                    .WithMessage("Any subfield with Version greater then 5 Not found")
                 .Add()
             .ForCollection(x => x.Subfields)
                 .Path($"{nameof(ComplexTestField)}.{nameof(ComplexTestField.Subfields)}")
@@ -97,16 +129,20 @@ namespace NSV.ValidationPipe.xTests
         public ValidateResult Validate(ComplexTestSubField field)
         {
             if (string.IsNullOrWhiteSpace(field.Code))
-                return ValidateResult.DefaultFailed.SetErrorMessage("Code is Empty");
+                return ValidateResult.DefaultFailed
+                    .SetErrorMessage("Code is Empty");
 
             if(field.Version != null && field.Version == 0)
-                return ValidateResult.DefaultFailed.SetErrorMessage("Version is 0");
+                return ValidateResult.DefaultFailed
+                    .SetErrorMessage("Version is 0");
 
             if(string.IsNullOrWhiteSpace(field.System))
-                return ValidateResult.DefaultFailed.SetErrorMessage("System is Empty");
+                return ValidateResult.DefaultFailed
+                    .SetErrorMessage("System is Empty");
 
             if (field.System != TestConst.Guid_3)
-                return ValidateResult.DefaultFailed.SetErrorMessage($"System not equal [{TestConst.Guid_3}]");
+                return ValidateResult.DefaultFailed
+                    .SetErrorMessage($"System not equal [{TestConst.Guid_3}]");
 
             return ValidateResult.DefaultValid;
         }

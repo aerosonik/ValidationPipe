@@ -3,25 +3,11 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace NSV.ValidationPipe
+namespace NSV.ValidationPipe.Extensions
 {
-    public static class ValidatorExtensions
+    public static class StringExtensions
     {
         private static string GuidPattern = @"^([0-9A-Fa-f]{8}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{4}[-][0-9A-Fa-f]{12})$";
-        //NotNull
-        public static IFieldValidatorCreator<TModel, TField> NotNull<TModel, TField>(
-            this IFieldValidatorCreator<TModel, TField> creator, 
-            string message = null)
-        {
-            return creator.Must(x => x != null).WithMessage(message);
-        }
-        public static IValidatorCreator<TModel, TField> NotNull<TModel, TField>(
-            this IFieldValidatorCreator<TModel, TField> creator)
-        {
-            return creator.Must(x => x != null);
-        }
-
-        #region TField = string
         //Equal
         public static IFieldValidatorCreator<TModel, string> Equal<TModel>(
             this IFieldValidatorCreator<TModel, string> creator,
@@ -60,7 +46,7 @@ namespace NSV.ValidationPipe
            string value)
         {
             return creator.Must(x => x.Contains(value));
-        }     
+        }
         //StartWith
         public static IFieldValidatorCreator<TModel, string> StartWith<TModel>(
             this IFieldValidatorCreator<TModel, string> creator,
@@ -149,107 +135,5 @@ namespace NSV.ValidationPipe
         {
             return creator.Must(x => !string.IsNullOrWhiteSpace(x));
         }
-        #endregion
-
-        #region TField = Int
-        //Equal
-        public static IFieldValidatorCreator<TModel, int> Equal<TModel>(
-            this IFieldValidatorCreator<TModel, int> creator,
-            int value, string message = null)
-        {
-            return creator.Must(x => x.Equals(value)).WithMessage(message);
-        }
-        public static IValidatorCreator<TModel, int> Equal<TModel>(
-            this IFieldValidatorCreator<TModel, int> creator,
-            int value)
-        {
-            return creator.Must(x => x.Equals(value));
-        }
-
-        // Greater
-        public static IFieldValidatorCreator<TModel, int> Greater<TModel>(
-           this IFieldValidatorCreator<TModel, int> creator,
-           int value, string message = null)
-        {
-            return creator.Must(x => x > value).WithMessage(message);
-        }
-        public static IValidatorCreator<TModel, int> Greater<TModel>(
-            this IFieldValidatorCreator<TModel, int> creator,
-            int value)
-        {
-            return creator.Must(x => x > value);
-        }
-
-        // GreaterOrEqual
-        public static IFieldValidatorCreator<TModel, int> GreaterOrEqual<TModel>(
-           this IFieldValidatorCreator<TModel, int> creator,
-           int value, string message = null)
-        {
-            return creator.Must(x => x >= value).WithMessage(message);
-        }
-        public static IValidatorCreator<TModel, int> GreaterOrEqual<TModel>(
-            this IFieldValidatorCreator<TModel, int> creator,
-            int value)
-        {
-            return creator.Must(x => x >= value);
-        }
-
-        // less
-        public static IFieldValidatorCreator<TModel, int> less<TModel>(
-           this IFieldValidatorCreator<TModel, int> creator,
-           int value, string message = null)
-        {
-            return creator.Must(x => x < value).WithMessage(message);
-        }
-        public static IValidatorCreator<TModel, int> less<TModel>(
-            this IFieldValidatorCreator<TModel, int> creator,
-            int value)
-        {
-            return creator.Must(x => x < value);
-        }
-
-        // lessOrEqual
-        public static IFieldValidatorCreator<TModel, int> lessOrEqual<TModel>(
-           this IFieldValidatorCreator<TModel, int> creator,
-           int value, string message = null)
-        {
-            return creator.Must(x => x <= value).WithMessage(message);
-        }
-        public static IValidatorCreator<TModel, int> lessOrEqual<TModel>(
-            this IFieldValidatorCreator<TModel, int> creator,
-            int value)
-        {
-            return creator.Must(x => x <= value);
-        }
-        // Between
-        public static IFieldValidatorCreator<TModel, int> Between<TModel>(
-           this IFieldValidatorCreator<TModel, int> creator,
-           int value1, int value2, string message = null)
-        {
-            return creator.Must(x => x > value1 && x < value2).WithMessage(message);
-        }
-        public static IValidatorCreator<TModel, int> Between<TModel>(
-            this IFieldValidatorCreator<TModel, int> creator,
-            int value1, int value2)
-        {
-            return creator.Must(x => x > value1 && x < value2);
-        }
-        #endregion
-
-        #region TField = DateTime
-        //Equal
-        public static IFieldValidatorCreator<TModel, DateTime> Equal<TModel>(
-            this IFieldValidatorCreator<TModel, DateTime> creator,
-            DateTime value, string message = null)
-        {
-            return creator.Must(x => x.Equals(value)).WithMessage(message);
-        }
-        public static IValidatorCreator<TModel, DateTime> Equal<TModel>(
-            this IFieldValidatorCreator<TModel, DateTime> creator,
-            DateTime value)
-        {
-            return creator.Must(x => x.Equals(value));
-        }
-        #endregion
     }
 }
