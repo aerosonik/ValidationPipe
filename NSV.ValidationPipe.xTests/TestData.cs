@@ -32,7 +32,12 @@ namespace NSV.ValidationPipe.xTests
                 var item = new SimpleTestModel
                 {
                     ModelType = Enum.Parse<TestModelType>(i + 1.ToString()),
-
+                    TestValue = GetBaseTestField(i),
+                    ComplexFields = GetComplexTestFieldList(i + 2),
+                    Created = DateTime.Now.AddDays(-2),
+                    Duration = TimeSpan.FromMinutes(10),
+                    Text = TestConst.Text_Field,
+                    Binary = new byte[] { 1, 100, 200, 2, 4, 6, 8, 0 }
                 };
                 result.Add(item);
             }
@@ -72,5 +77,41 @@ namespace NSV.ValidationPipe.xTests
                 Code = "Code"
             }
         };
+
+        private static List<ComplexTestField> GetComplexTestFieldList(int count)
+        {
+            var list = new List<ComplexTestField>();
+            for(int i = 0; i < count; i++)
+            {
+                var item = new ComplexTestField
+                {
+                    System = TestConst.Guid_2,
+                    Subfields = new List<ComplexTestSubField>
+                    {
+                        new ComplexTestSubField
+                        {
+                            Code = $"Code {i}",
+                            System = TestConst.Guid_3,
+                            Version = 3
+                        },
+                        new ComplexTestSubField
+                        {
+                            Code = $"Code {i}",
+                            System = TestConst.Guid_3,
+                            Version = 4
+                        },
+                        new ComplexTestSubField
+                        {
+                            Code = $"Code {i}",
+                            System = TestConst.Guid_3,
+                            Version = 6
+                        },
+                    }
+                };
+                list.Add(item);
+            }
+
+            return list;
+        }
     }
 }

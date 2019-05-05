@@ -11,7 +11,8 @@ namespace NSV.ValidationPipe.Extensions
         //Equal
         public static IFieldValidatorCreator<TModel, string> Equal<TModel>(
             this IFieldValidatorCreator<TModel, string> creator,
-            string value, string message = null)
+            string value, 
+            string message = null)
         {
             return creator.Must(x => x.Equals(value)).WithMessage(message);
         }
@@ -24,7 +25,8 @@ namespace NSV.ValidationPipe.Extensions
         //NotEqual
         public static IFieldValidatorCreator<TModel, string> NotEqual<TModel>(
            this IFieldValidatorCreator<TModel, string> creator,
-           string value, string message = null)
+           string value, 
+           string message = null)
         {
             return creator.Must(x => !x.Equals(value)).WithMessage(message);
         }
@@ -37,7 +39,8 @@ namespace NSV.ValidationPipe.Extensions
         //Contains
         public static IFieldValidatorCreator<TModel, string> Contains<TModel>(
             this IFieldValidatorCreator<TModel, string> creator,
-            string value, string message = null)
+            string value, 
+            string message = null)
         {
             return creator.Must(x => x.Contains(value)).WithMessage(message);
         }
@@ -50,7 +53,8 @@ namespace NSV.ValidationPipe.Extensions
         //StartWith
         public static IFieldValidatorCreator<TModel, string> StartWith<TModel>(
             this IFieldValidatorCreator<TModel, string> creator,
-            string value, string message = null)
+            string value, 
+            string message = null)
         {
             return creator.Must(x => x.StartsWith(value)).WithMessage(message);
         }
@@ -76,7 +80,8 @@ namespace NSV.ValidationPipe.Extensions
         //Regexp
         public static IFieldValidatorCreator<TModel, string> IsMatch<TModel>(
             this IFieldValidatorCreator<TModel, string> creator,
-            string pattern, string message = null)
+            string pattern, 
+            string message = null)
         {
             return creator.Must(x => Regex.IsMatch(x, pattern, RegexOptions.CultureInvariant))
                           .WithMessage(message);

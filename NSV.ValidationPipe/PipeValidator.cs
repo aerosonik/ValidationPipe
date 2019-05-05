@@ -121,7 +121,8 @@ namespace NSV.ValidationPipe
                 while (_validators.Count > 0)
                 {
                     var item = _validators.Dequeue();
-                    resultList.Add(await item.ExecuteValidationAsync(model));
+                    var fieldResult = await item.ExecuteValidationAsync(model);
+                    resultList.Add(fieldResult);
                 }
                 results = results.ToArray();
             }

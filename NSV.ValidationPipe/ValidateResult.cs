@@ -51,7 +51,6 @@ namespace NSV.ValidationPipe
 
         public bool IsFailed
         {
-
             get
             {
                 return Success == ExecutionResult.Failed;
