@@ -43,7 +43,10 @@ namespace NSV.ValidationPipe
             if (!_ifConditionStack.HasValue || !_ifConditionStack.Value.Any())
                 return new FieldValidatorCreator<TModel, TField>(this, field);
 
-            return new FieldValidatorCreator<TModel, TField>(this, field, _ifConditionStack.Value.ToArray());
+            return new FieldValidatorCreator<TModel, TField>(
+                this, 
+                field, 
+                _ifConditionStack.Value.ToArray());
         }
 
         public IPipeValidator<TModel> If(Func<TModel, bool> condition)
@@ -124,10 +127,13 @@ namespace NSV.ValidationPipe
                     var fieldResult = await item.ExecuteValidationAsync(model);
                     resultList.Add(fieldResult);
                 }
-                results = results.ToArray();
+                results = resultList.ToArray();
             }
             var result = ValidateResult.DefaultValid;
-            result.SubResults = results.SelectMany(x => x.SubResults.Value).ToArray();
+            result.SubResults = results
+                .Where(x => x.SubResults.HasValue)
+                .SelectMany(x => x.SubResults.Value)
+                .ToArray();
             if (result.SubResults.Value.Any(x => x.IsFailed))
                 result.Success = ExecutionResult.Failed;
             return result;

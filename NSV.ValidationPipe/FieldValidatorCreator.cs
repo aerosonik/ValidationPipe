@@ -154,9 +154,12 @@ namespace NSV.ValidationPipe
                 }
                 var results = new ValidateResult();
                 results.SubResults = await Task.WhenAll(tasks);
-                results.SubResults = results.SubResults
-                    .Value.SelectMany(x => x.SubResults.Value)
-                    .ToArray();
+                if(results.SubResults.HasValue)
+                    results.SubResults = results.SubResults.Value
+                        .Where(x => x.SubResults.HasValue)
+                        .SelectMany(x => x.SubResults.Value)
+                        .ToArray();
+
                 if (results.SubResults.Value.Any(x => x.IsFailed))
                     results.Success = ExecutionResult.Failed;
                 return results;
@@ -188,52 +191,53 @@ namespace NSV.ValidationPipe
         {
             var path = _path + index;
             var tasks = _queue
-                .Where(x => x.StructureType == ValidatorStrutureType.FuncAsync)
+                .Where(x => x.IsAsync)
                 .Select(async x =>
                 {
-                    var result = await x.MustAsync(field);
-                    return result
-                        ? ValidateResult.DefaultValid
-                        : ValidateResult.DefaultFailed
-                            .SetErrorMessage(x.Message)
-                            .SetPath(path);
-                }).Union(_queue
-                    .Where(x => x.StructureType == ValidatorStrutureType.ValidatorAsync)
-                    .Select(async x =>
+                    if (x.StructureType == ValidatorStrutureType.FuncAsync)
                     {
-                        var result = await x.ValidatorAsync.ValidateAsync(field);
-                        if (result.Success == ExecutionResult.Failed)
-                            result.SetPath(path);
-                        return result;
-                    }));
+                        return await x.MustAsync(field)
+                            ? ValidateResult.DefaultValid
+                            : ValidateResult.DefaultFailed
+                                .SetErrorMessage(x.Message)
+                                .SetPath(path);
+                    }
+                    var result = await x.ValidatorAsync.ValidateAsync(field);
+                    if (result.Success == ExecutionResult.Failed)
+                        result.SetPath(path);
+                    return result;
+                }).ToArray();
 
             var results = new ValidateResult();
             results.SubResults = _queue
-                .Where(x => x.StructureType == ValidatorStrutureType.Func)
+                .Where(x => !x.IsAsync)
                 .Select(x =>
                 {
-                    var result = x.Must(field);
-                    return result
-                        ? ValidateResult.DefaultValid
-                        : ValidateResult.DefaultFailed
-                            .SetErrorMessage(x.Message)
-                            .SetPath(path);
-                }).Union(_queue
-                        .Where(x => x.StructureType == ValidatorStrutureType.Validator)
-                        .Select(x =>
-                        {
-                            var result = x.Validator.Validate(field);
-                            if (result.Success == ExecutionResult.Failed)
-                                result.SetPath(path);
-                            return result;
-                        }))
-                .ToArray();
+                    if (x.StructureType == ValidatorStrutureType.Func)
+                    {
+                        return x.Must(field)
+                            ? ValidateResult.DefaultValid
+                            : ValidateResult.DefaultFailed
+                                .SetErrorMessage(x.Message)
+                                .SetPath(path);
+                    }
+                    var result = x.Validator.Validate(field);
+                    if (result.Success == ExecutionResult.Failed)
+                        result.SetPath(path);
+                    return result;
+                }).ToArray();
 
             var subResults = await Task.WhenAll(tasks);
 
             results.SubResults = results.SubResults.Value.Concat(subResults).ToArray();
             if (results.SubResults.Value.Any(x => x.IsFailed))
+            {
                 results.Success = ExecutionResult.Failed;
+                return results;
+            }
+
+            if (results.SubResults.Value.Any(x => x.IsValid))
+                results.Success = ExecutionResult.Successful;
 
             return results;
         }
@@ -309,6 +313,7 @@ namespace NSV.ValidationPipe
             MustAsync = null;
             Validator = null;
             ValidatorAsync = null;
+            IsAsync = false;
         }
         public ValidatorStruture(
             Func<TField, bool> must)
@@ -316,7 +321,7 @@ namespace NSV.ValidationPipe
             StructureType = ValidatorStrutureType.Func;
             Must = must;
             Message = null;
-
+            IsAsync = false;
             MustAsync = null;
             Validator = null;
             ValidatorAsync = null;
@@ -327,7 +332,7 @@ namespace NSV.ValidationPipe
             StructureType = ValidatorStrutureType.FuncAsync;
             MustAsync = mustAsync;
             Message = null;
-
+            IsAsync = true;
             Must = null;
             Validator = null;
             ValidatorAsync = null;
@@ -336,7 +341,7 @@ namespace NSV.ValidationPipe
         {
             StructureType = ValidatorStrutureType.Validator;
             Validator = validator;
-
+            IsAsync = false;
             Message = null;
             Must = null;
             MustAsync = null;
@@ -346,12 +351,13 @@ namespace NSV.ValidationPipe
         {
             StructureType = ValidatorStrutureType.ValidatorAsync;
             ValidatorAsync = validatorAsync;
-
+            IsAsync = true;
             Message = null;
             Must = null;
             MustAsync = null;
             Validator = null;
         }
+        public bool IsAsync { get; set; }
         public ValidatorStrutureType StructureType { get; }
         public string Message { get; set; }
         public Func<TField, bool> Must { get; }

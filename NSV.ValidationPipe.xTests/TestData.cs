@@ -31,7 +31,7 @@ namespace NSV.ValidationPipe.xTests
             {
                 var item = new SimpleTestModel
                 {
-                    ModelType = Enum.Parse<TestModelType>(i + 1.ToString()),
+                    ModelType = Enum.Parse<TestModelType>((i + 1).ToString()),
                     TestValue = GetBaseTestField(i),
                     ComplexFields = GetComplexTestFieldList(i + 2),
                     Created = DateTime.Now.AddDays(-2),
