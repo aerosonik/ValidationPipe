@@ -1,22 +1,20 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
 using System.Threading.Tasks;
 using NSV.ExecutionPipe;
 using NSV.ExecutionPipe.Models;
-using NSV.ExecutionPipe.Pipes;
 
 namespace NSV.ValidationPipe
 {
-   internal class FieldValidatorCreator<TModel, TField> :
+    internal class FieldValidatorCreator<TModel, TField> :
         IFieldValidatorCreator<TModel, TField>,
         IValidatorCreator<TModel, TField>,
         IFieldValidatorExecutor<TModel>
     {
-        private readonly Optional<Func<TModel, bool>[]> _ifConditions = Optional<Func<TModel, bool>[]>.Default;
+        private readonly Optional<Func<TModel, bool>[]> _ifConditions = 
+            Optional<Func<TModel, bool>[]>.Default;
         private readonly Expression<Func<TModel, TField>> _field;
         private readonly Expression<Func<TModel, IEnumerable<TField>>> _collectionField;
         private readonly PipeValidator<TModel> _pipe;
@@ -92,7 +90,8 @@ namespace NSV.ValidationPipe
             return this;
         }
 
-        IFieldValidatorCreator<TModel, TField> IValidatorCreator<TModel, TField>.WithMessage(string message)
+        IFieldValidatorCreator<TModel, TField> IValidatorCreator<TModel, TField>.WithMessage(
+            string message)
         {
             _current.Message = message;
             return this;
@@ -124,7 +123,8 @@ namespace NSV.ValidationPipe
             return this;
         }
 
-        async Task<ValidateResult> IFieldValidatorExecutor<TModel>.ExecuteValidationAsync(TModel model)
+        async Task<ValidateResult> IFieldValidatorExecutor<TModel>.ExecuteValidationAsync(
+            TModel model)
         {
             if (!CheckIfConditions(model))
                 return ValidateResult.Default;
@@ -143,13 +143,15 @@ namespace NSV.ValidationPipe
                 {
                     tasks = fields
                         .AsParallel()
-                        .Select(async x => await InvokeValidationForField(x.field, _current, x.index))
+                        .Select(async x => 
+                            await InvokeValidationForField(x.field, _current, x.index))
                         .ToArray();
                 }
                 else
                 {
                     tasks = fields
-                        .Select(async x => await InvokeValidationForField(x.field, _current, x.index))
+                        .Select(async x => 
+                            await InvokeValidationForField(x.field, _current, x.index))
                         .ToArray();
                 }
                 var results = new ValidateResult();
@@ -305,7 +307,8 @@ namespace NSV.ValidationPipe
 
     internal struct ValidatorStruture<TField>
     {
-        public ValidatorStruture(ValidatorStrutureType validatorStrutType = ValidatorStrutureType.Default)
+        public ValidatorStruture(
+            ValidatorStrutureType validatorStrutType = ValidatorStrutureType.Default)
         {
             StructureType = validatorStrutType;
             Message = null;

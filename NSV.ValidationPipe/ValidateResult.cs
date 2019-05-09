@@ -64,24 +64,17 @@ namespace NSV.ValidationPipe
                 return Success == ExecutionResult.Successful;
             }
         }
-    }
 
-    public static class ValidateResultExtensions
-    {
-        public static ValidateResult SetErrorMessage(
-            this ValidateResult result,
-            string message)
+        public ValidateResult SetErrorMessage(string message)
         {
-            result.ErrorMessage = message;
-            return result;
+            ErrorMessage = message;
+            return this;
         }
 
-        public static ValidateResult SetPath(
-            this ValidateResult result,
-            string path)
+        public ValidateResult SetPath(string path)
         {
-            result.FieldPath = path;
-            return result;
+            FieldPath = path;
+            return this;
         }
     }
 }

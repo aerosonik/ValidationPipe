@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace NSV.ValidationPipe.xTests
@@ -17,10 +18,16 @@ namespace NSV.ValidationPipe.xTests
 
         public static ComplexTestModel GetInvalidModel()
         {
-            return new ComplexTestModel
+            var model = GetValidModel();
+            model.Id = "ooooooooo";
+            model.Models.FirstOrDefault().ModelType = TestModelType.Unknown;
+            model.Models.LastOrDefault().TestValue = new MoneyTestField
             {
-
+                Currency = Currency.JPY,
+                Amount = 0
             };
+
+            return model;
         }
 
         private static List<SimpleTestModel> GetValidSimpleModels()
@@ -81,7 +88,7 @@ namespace NSV.ValidationPipe.xTests
         private static List<ComplexTestField> GetComplexTestFieldList(int count)
         {
             var list = new List<ComplexTestField>();
-            for(int i = 0; i < count; i++)
+            for (int i = 0; i < count; i++)
             {
                 var item = new ComplexTestField
                 {
