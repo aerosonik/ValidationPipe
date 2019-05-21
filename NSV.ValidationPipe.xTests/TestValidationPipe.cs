@@ -21,7 +21,7 @@ namespace NSV.ValidationPipe.xTests
                     .WithMessage("Should start with [f27a5b7f-0b7c]")
                 .Add()
             .ForCollection(x => x.Models)
-                .AsParallel()
+                //.AsParallel()
                 .Path($"{nameof(ComplexTestModel)}.{nameof(ComplexTestModel.Models)}")
                 .Set(new TestSubValidationPipe())
                 .Add()
@@ -132,25 +132,26 @@ namespace NSV.ValidationPipe.xTests
 
     public class ComplexTestSubFieldValidator : IValidator<ComplexTestSubField>
     {
-        public ValidateResult Validate(ComplexTestSubField field)
+        public ValidateResultWrapper Validate(ComplexTestSubField field)
         {
+            var result = ValidateResult.Default;
             if (string.IsNullOrWhiteSpace(field.Code))
-                return ValidateResult.DefaultFailed
+                result =  ValidateResult.DefaultFailed
                     .SetErrorMessage("Code is Empty");
 
             if(field.Version != null && field.Version == 0)
-                return ValidateResult.DefaultFailed
+                result = ValidateResult.DefaultFailed
                     .SetErrorMessage("Version is 0");
 
             if(string.IsNullOrWhiteSpace(field.System))
-                return ValidateResult.DefaultFailed
+                result = ValidateResult.DefaultFailed
                     .SetErrorMessage("System is Empty");
 
             if (field.System != TestConst.Guid_3)
-                return ValidateResult.DefaultFailed
+                result = ValidateResult.DefaultFailed
                     .SetErrorMessage($"System not equal [{TestConst.Guid_3}]");
 
-            return ValidateResult.DefaultValid;
+            return ValidateResultWrapper.Create(result);
         }
     }
 }

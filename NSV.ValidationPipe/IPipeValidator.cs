@@ -26,24 +26,22 @@ namespace NSV.ValidationPipe
         IPipeValidator<TModel> UseLocalCacheThreadSafe();
         IPipeValidator<TModel> UseLocalCache();
 
-        Task<ValidateResult> ExecuteAsync(TModel model);
+        Task<ValidateResult[]> ExecuteAsync(TModel model);
     }
-
 
     public interface IFieldValidatorExecutor<TModel>
     {
-        Task<ValidateResult> ExecuteValidationAsync(TModel model);
+        Task<ValidateResultWrapper> ExecuteValidationAsync(TModel model);
     }
 
     public interface IValidator<TField>
     {
-        ValidateResult Validate(TField field);
+        ValidateResultWrapper Validate(TField field);
     }
 
     public interface IValidatorAsync<TField>
     {
-        Task<ValidateResult> ValidateAsync(TField field);
-    }
-
-   
+        bool IsForCollection { get; set; }
+        Task<ValidateResultWrapper> ValidateAsync(TField field);
+    }  
 }

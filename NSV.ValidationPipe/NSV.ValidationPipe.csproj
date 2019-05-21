@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NSV.ExecutionPipe" Version="1.0.31" />
+    <PackageReference Include="NSV.ExecutionPipe" Version="1.0.46" />
   </ItemGroup>
 
   <ItemGroup>

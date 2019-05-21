@@ -34,7 +34,10 @@ namespace NSV.ValidationPipe
             if (!_ifConditionStack.HasValue || !_ifConditionStack.Value.Any())
                 return new FieldValidatorCreator<TModel, TField>(this, field);
 
-            return new FieldValidatorCreator<TModel, TField>(this, field, _ifConditionStack.Value.ToArray());
+            return new FieldValidatorCreator<TModel, TField>(
+                this,
+                field,
+                _ifConditionStack.Value.ToArray());
         }
 
         public IFieldValidatorCreator<TModel, TField> ForCollection<TField>(
@@ -102,65 +105,71 @@ namespace NSV.ValidationPipe
             return this;
         }
 
-        public async Task<ValidateResult> ExecuteAsync(TModel model)
+        public async Task<ValidateResult[]> ExecuteAsync(TModel model)
         {
             if (_ifConditionStack.HasValue && _ifConditionStack.Value.Any())
                 throw new Exception("Expected EndIf or EndAllIf operators");
             if (_ifConditionStack.HasValue)
                 _ifConditionStack = Optional<Stack<Func<TModel, bool>>>.Default;
 
-            ValidateResult[] results = null;
             if (_asParallel)
             {
                 var resultTasks = _validators
                     .AsParallel()
                     .Select(async x => await x.ExecuteValidationAsync(model))
                     .ToArray();
-                results = await Task.WhenAll(resultTasks);
+                var taskResults = await Task.WhenAll(resultTasks);
+                return taskResults
+                    .Where(x => x.IsSingleResult)
+                    .Select(x => x.Result.Value)
+                    .Concat(taskResults.Where(x => x.IsSetOfResults).SelectMany(x => x.Results.Value))
+                    .ToArray();
             }
             else
             {
                 var resultList = new List<ValidateResult>();
-                while (_validators.Count > 0)
+                if (!IsForCollection)
                 {
-                    var item = _validators.Dequeue();
-                    var fieldResult = await item.ExecuteValidationAsync(model);
-                    resultList.Add(fieldResult);
+                    while (_validators.Count > 0)
+                    {
+                        await HandleExecuteValidation(_validators.Dequeue(), model, resultList);
+                    }
                 }
-                results = resultList.ToArray();
+                else
+                {
+                    foreach(var item in _validators)
+                    {
+                        await HandleExecuteValidation(item, model, resultList);
+                    }
+                }
+                return resultList.ToArray();
             }
-            var result = ValidateResult.DefaultValid;
-            result.SubResults = results
-                .Where(x => x.SubResults.HasValue)
-                .SelectMany(x => x.SubResults.Value)
-                .ToArray();
-            if (result.SubResults.Value.Any(x => x.IsFailed))
-                result.Success = ExecutionResult.Failed;
-            return result;
         }
         #endregion
 
         #region IValidatorAsync<TField>
-        public async Task<ValidateResult> ValidateAsync(TModel model)
+
+        public bool IsForCollection { get; set; }
+        public async Task<ValidateResultWrapper> ValidateAsync(TModel model)
         {
-            return await ExecuteAsync(model);
+            return ValidateResultWrapper.Create(await ExecuteAsync(model));
         }
         #endregion
 
         #region ILocalCache
-        public object GetObject(object key)
+        public T GetObject<T>(object key)
         {
             if (!_localCache.HasValue && _externalCache.HasValue)
-                return _externalCache.Value.GetObject(key);
+                return _externalCache.Value.GetObject<T>(key);
 
             if (_localCache.HasValue && !_externalCache.HasValue)
                 if (_localCache.Value.TryGetValue(key, out var value))
-                    return value;
+                    return (T)value;
 
-            return null;
+            return default(T);
         }
 
-        public void SetObject(object key, object value)
+        public void SetObject<T>(object key, T value)
         {
             if (!_localCache.HasValue && _externalCache.HasValue)
             {
@@ -198,5 +207,18 @@ namespace NSV.ValidationPipe
 
             _validators.Enqueue(validator);
         }
+
+        private async Task HandleExecuteValidation(
+            IFieldValidatorExecutor<TModel> item, 
+            TModel model, 
+            List<ValidateResult> list)
+        {
+            var fieldResult = await item.ExecuteValidationAsync(model);
+            if (fieldResult.IsSingleResult)
+                list.Add(fieldResult.Result.Value);
+            else
+                list.AddRange(fieldResult.Results.Value);
+        }
+
     }
 }

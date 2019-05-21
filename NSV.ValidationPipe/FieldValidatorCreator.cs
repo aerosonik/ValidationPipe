@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using NSV.ExecutionPipe;
 using NSV.ExecutionPipe.Models;
+using NSV.ValidationPipe.Extensions;
 
 namespace NSV.ValidationPipe
 {
@@ -113,6 +114,9 @@ namespace NSV.ValidationPipe
         public IFieldValidatorCreator<TModel, TField> Set(IValidatorAsync<TField> validatorAsync)
         {
             CheckQueueAndCurrentValidator();
+            if (_isCollectionField)
+                validatorAsync.IsForCollection = true;
+
             _current = new ValidatorStruture<TField>(validatorAsync);
             return this;
         }
@@ -123,11 +127,11 @@ namespace NSV.ValidationPipe
             return this;
         }
 
-        async Task<ValidateResult> IFieldValidatorExecutor<TModel>.ExecuteValidationAsync(
+        async Task<ValidateResultWrapper> IFieldValidatorExecutor<TModel>.ExecuteValidationAsync(
             TModel model)
         {
             if (!CheckIfConditions(model))
-                return ValidateResult.Default;
+                return ValidateResultWrapper.Create(ValidateResult.Default);
 
             if (_isCollectionField)
             {
@@ -138,44 +142,34 @@ namespace NSV.ValidationPipe
                     .Select(x => (field : x, index: index++))
                     .ToArray();
 
-                Task<ValidateResult>[] tasks = null;
+                Task<ValidateResultWrapper>[] tasks = null;
                 if (_asParallel)
                 {
                     tasks = fields
                         .AsParallel()
                         .Select(async x => 
-                            await InvokeValidationForField(x.field, _current, x.index))
+                            await InvokeValidationForField(x.field, x.index))
                         .ToArray();
                 }
                 else
                 {
                     tasks = fields
                         .Select(async x => 
-                            await InvokeValidationForField(x.field, _current, x.index))
+                            await InvokeValidationForField(x.field, x.index))
                         .ToArray();
                 }
-                var results = new ValidateResult();
-                results.SubResults = await Task.WhenAll(tasks);
-                if(results.SubResults.HasValue)
-                    results.SubResults = results.SubResults.Value
-                        .Where(x => x.SubResults.HasValue)
-                        .SelectMany(x => x.SubResults.Value)
-                        .ToArray();
-
-                if (results.SubResults.Value.Any(x => x.IsFailed))
-                    results.Success = ExecutionResult.Failed;
-                return results;
+                var results = await Task.WhenAll(tasks);
+                return results.UnPack();
             }
             else
             {
                 TField field = _field.Compile().Invoke(model);
-                return await InvokeValidationForField(field, _current);
+                return await InvokeValidationForField(field);
             }
         }
 
-        private async Task<ValidateResult> InvokeValidationForField(
+        private async Task<ValidateResultWrapper> InvokeValidationForField(
             TField field,
-            ValidatorStruture<TField> current,
             int? index = null)
         {
             var indexstr = index == null ? string.Empty : $"[{index}]";
@@ -185,11 +179,11 @@ namespace NSV.ValidationPipe
             }
             else
             {
-                return await InvokeValidationForCurrent(field, current, indexstr);
+                return await InvokeValidationForCurrent(field, indexstr);
             }
         }
 
-        private async Task<ValidateResult> InvokeValidationForQueue(TField field, string index)
+        private async Task<ValidateResultWrapper> InvokeValidationForQueue(TField field, string index)
         {
             var path = _path + index;
             var tasks = _queue
@@ -198,89 +192,89 @@ namespace NSV.ValidationPipe
                 {
                     if (x.StructureType == ValidatorStrutureType.FuncAsync)
                     {
-                        return await x.MustAsync(field)
+                        var asyncResult = await x.MustAsync(field)
                             ? ValidateResult.DefaultValid
                             : ValidateResult.DefaultFailed
                                 .SetErrorMessage(x.Message)
                                 .SetPath(path);
+                        return ValidateResultWrapper.Create(asyncResult);
                     }
-                    var result = await x.ValidatorAsync.ValidateAsync(field);
-                    if (result.Success == ExecutionResult.Failed)
-                        result.SetPath(path);
-                    return result;
+                    else
+                    {
+                        var asyncResultWrapper = await x.ValidatorAsync.ValidateAsync(field);
+                        if(asyncResultWrapper.IsSingleResult && asyncResultWrapper.Result.Value.IsFailed)
+                            asyncResultWrapper.Result.Value.SetPath(path);
+                        return asyncResultWrapper;
+                    }
                 }).ToArray();
 
-            var results = new ValidateResult();
-            results.SubResults = _queue
+            var results = _queue
                 .Where(x => !x.IsAsync)
                 .Select(x =>
                 {
                     if (x.StructureType == ValidatorStrutureType.Func)
                     {
-                        return x.Must(field)
+                        var result = x.Must(field)
                             ? ValidateResult.DefaultValid
                             : ValidateResult.DefaultFailed
                                 .SetErrorMessage(x.Message)
                                 .SetPath(path);
+                        return ValidateResultWrapper.Create(result);
                     }
-                    var result = x.Validator.Validate(field);
-                    if (result.Success == ExecutionResult.Failed)
-                        result.SetPath(path);
-                    return result;
+                    var resultWrapper = x.Validator.Validate(field);
+                    if (resultWrapper.IsSingleResult && resultWrapper.Result.Value.IsFailed)
+                        resultWrapper.Result.Value.SetPath(path);
+                    return resultWrapper;
                 }).ToArray();
 
-            var subResults = await Task.WhenAll(tasks);
-
-            results.SubResults = results.SubResults.Value.Concat(subResults).ToArray();
-            if (results.SubResults.Value.Any(x => x.IsFailed))
-            {
-                results.Success = ExecutionResult.Failed;
-                return results;
-            }
-
-            if (results.SubResults.Value.Any(x => x.IsValid))
-                results.Success = ExecutionResult.Successful;
-
-            return results;
+            return results
+                .Concat(await Task.WhenAll(tasks))
+                .ToArray()
+                .UnPack();
         }
 
-        private async Task<ValidateResult> InvokeValidationForCurrent(
-            TField field,
-            ValidatorStruture<TField> current,
-            string index)
+        private async Task<ValidateResultWrapper> InvokeValidationForCurrent(TField field, string index)
         {
+            ValidateResult result = ValidateResult.DefaultValid;
             var path = _path + index;
-            switch (current.StructureType)
+            switch (_current.StructureType)
             {
                 case ValidatorStrutureType.Func:
-                    if (!_current.Must(field))
-                        return ValidateResult.DefaultFailed
-                            .SetErrorMessage(current.Message)
+                    var rez = _current.Must(field);
+                    if (!rez)
+                    {
+                        result = ValidateResult.DefaultFailed
+                            .SetErrorMessage(_current.Message)
                             .SetPath(path);
-                    return ValidateResult.DefaultValid;
+                    }
+                    break;
 
                 case ValidatorStrutureType.FuncAsync:
-                    if (!await _current.MustAsync(field))
-                        return ValidateResult.DefaultFailed
-                            .SetErrorMessage(current.Message)
+                    var rez1 = await _current.MustAsync(field);
+                    if (!rez1)
+                    {
+                        result = ValidateResult.DefaultFailed
+                            .SetErrorMessage(_current.Message)
                             .SetPath(path);
-                    return ValidateResult.DefaultValid;
+                    }
+                    break;
 
                 case ValidatorStrutureType.Validator:
-                    var result = current.Validator.Validate(field);
-                    if (result.IsFailed)
-                        result.SetPath(path);
-                    return result;
+                    var wrappedResult = _current.Validator.Validate(field);
+                    if (wrappedResult.IsSingleResult && wrappedResult.Result.Value.IsFailed)
+                        wrappedResult.Result.Value.SetPath(path);
+
+                    return wrappedResult;
 
                 case ValidatorStrutureType.ValidatorAsync:
-                    var asyncResult = await current.ValidatorAsync.ValidateAsync(field);
-                    if (asyncResult.IsFailed)
-                        asyncResult.SetPath(path);
-                    return asyncResult;
+                    var asyncWrappedResult = await _current.ValidatorAsync.ValidateAsync(field);
+                    if (asyncWrappedResult.IsSingleResult && asyncWrappedResult.Result.Value.IsFailed)
+                        asyncWrappedResult.Result.Value.SetPath(path);
 
-                default:
-                    return ValidateResult.DefaultValid;
+                    return asyncWrappedResult;
             }
+
+            return ValidateResultWrapper.Create(result);
         }
 
         private void CheckQueueAndCurrentValidator()
@@ -296,6 +290,9 @@ namespace NSV.ValidationPipe
         private bool CheckIfConditions(TModel model)
         {
             if (!_ifConditions.HasValue && _when(model))
+                return true;
+
+            if (!_ifConditions.Value.Any() && _when(model))
                 return true;
 
             if (_ifConditions.Value.Select(x => x(model)).All(x => x) && _when(model))
@@ -377,5 +374,4 @@ namespace NSV.ValidationPipe
         Validator,
         ValidatorAsync
     }
-
 }
